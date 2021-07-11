@@ -28,4 +28,10 @@ is the same script but reading the instructions of the excel.
 * 2- run " python ATM.py " to update, change capital invested or reset risk of all portfolios generated.
 
 
-
+### WHAT DOES EACH FILE?
+* scrap.py a set of functions to gather the information needed and filter by top 50 under criteria of sharpe ratio.
+* micro.py is the individual creator of portfolios.
+* macro.py runs the clients.csv file as input to do all the specified portfolios.
+* ATM.py just like an ATM machine to know the state of the investment updated, reset risk or make a withdraw.
+* maintenance.py same as ATM.py but in a bigger scale using clients.csv as inputs. It resets columns of values so to not repeat same operations.
+* trackCLI.py & trackATM.py set of functions to Update, Change Capital and Reset Risk by C-VaR.
