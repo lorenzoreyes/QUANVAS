@@ -36,4 +36,3 @@ is the same script but reading the instructions of the excel.
 * maintenance.py same as ATM.py but in a bigger scale using clients.csv as inputs. It resets columns of values so to not repeat same operations.
 * trackCLI.py & trackATM.py set of functions to Update, Change Capital and Reset Risk by C-VaR.
 
-# LICENSE AS IF
