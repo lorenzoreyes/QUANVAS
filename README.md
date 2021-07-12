@@ -35,3 +35,5 @@ is the same script but reading the instructions of the excel.
 * ATM.py just like an ATM machine to know the state of the investment updated, reset risk or make a withdraw.
 * maintenance.py same as ATM.py but in a bigger scale using clients.csv as inputs. It resets columns of values so to not repeat same operations.
 * trackCLI.py & trackATM.py set of functions to Update, Change Capital and Reset Risk by C-VaR.
+
+# LICENSE AS IF
