@@ -1,6 +1,6 @@
 <img src="QUANVAS.jpg" width="100%" height="20%">
 
-# A set of tools to-do CRUD operations for Portfolio Management
+# A program to do Portfolio Cycle Management
 
 * Structure of the project:
 <img src="treeQuanvas.jpg" width="50%" height="5%">
