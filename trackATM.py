@@ -13,8 +13,6 @@ import numpy as np
   4 BacktoBasics reverse previous functions format to original format
   """
 
-clients = pd.read_csv('clients.csv')
-
 def PortfolioMonitor(data):
   """Provide a DataFrame.index as the stock list 
      to update data, DataFrame['quantity'] &
@@ -139,7 +137,7 @@ def portfolioRiskUpdated(data):
 
 def BacktoBasics(portfolio):
   """Convert back suggestions to original format"""
-  df = pd.DataFrame(pd.DataFrame(data=(portfolio['notionalRebalance'].values + portfolio['liquidityToReinvest'].values),columns=['capital'],index=portfolio.index))
+  df = pd.DataFrame(pd.DataFrame(data=(portfolio.notionalRebalance.values + portfolio.liquidityToReinvest.values),columns=['capital'],index=portfolio.index))
   df['price'] = portfolio['priceToday'].values
   df['weights'] = portfolio['percentReb'].values
   df['cash'] = (df['capital'] * df['weights'])

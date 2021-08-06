@@ -8,6 +8,8 @@ from scipy import stats
 import scrap
 import ssl
 
+clients = pd.read_csv('generate.csv')
+
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
@@ -22,22 +24,31 @@ def megaManager():
   market = str(input("Which market do you wish to operate?... "))
   if market == '1':
       data = scrap.GSPC()
+      symbol = 'GSPC'
   elif market == '2':
       data = scrap.FTSE()
+      symbol = 'FTSE'
   elif market == '3':
       data = scrap.Cedears()
+      symbol = 'CEDEARS'
   elif market == '4':
       data = scrap.NIKKEI()
+      symbol = 'NIKKEI'
   elif market =='5':
       data = scrap.BOVESPA()
+      symbol = 'BOVESPA'
   elif market == '6':
       data = scrap.CANADA()
+      symbol = 'CANADA'
   elif market == '7':
       data = scrap.AUSTRALIA()
+      symbol = 'AUSTRALIA'
   elif market == '8':
       data = scrap.Shanghai()
+      symbol = 'SHANGHAI'
   elif market == '9':
       data = scrap.binance()
+      symbol = 'CRYPTO'
 
   df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths,\
       observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound = \
@@ -210,6 +221,7 @@ def megaManager():
   # Once all calculus is done. Pass to generate specific portfolios    
   if ("" == str(input("CALCULATIONS DONE SUCCESSFULLY. Press [Enter] to build portfolios."))):
     for i in range(int(input("how many portfolios you want? "))):
+      client = input(f"enter the name of your client {i}: ") 
       profile = str(input("Choose Optimization\n1 SharpeRatio\n2 SortinoRatio\n3 SharpeUnbound\n4 MinVaR\nOther option is the winner\nMake your choice: "))
       if profile == '1':
           profile = 'SharpeRatio'
@@ -221,12 +233,13 @@ def megaManager():
           profile = 'MinVaR'
       else:
           profile = winner
-      client = input('enter the name of your client: ',)
       name = str(client) + str(' ') + str(profile) + str(' ') + str(dt.date.today()) + '.xlsx'
-      folder = os.makedirs('./excel/', exist_ok=True)
-      path = './excel/' + name
+      folder = os.makedirs('./NewOnes/', exist_ok=True)
+      capital = int(input(f"How much {client} will invest? "))
+      path = f'./NewOnes/{symbol} ' + client + ' ' + str(input("Email address? "))\
+              + ' ' + str(capital) + ' ' + profile + ' ' + str(dt.date.today()) + '.xlsx'
       best = pd.DataFrame(index=df.columns)
-      best['capital'] = float(input(f"How much {client} will invest? "))
+      best['capital'] = capital
       best['price'] = df.tail(1).T.values
       best['weights'] = portfolioAdj[f'{profile}'].values 
       best['cash'] = (best['capital'] * best['weights'])

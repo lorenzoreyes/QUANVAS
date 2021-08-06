@@ -18,16 +18,16 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 #from pytickersymbols import PyTickerSymbols #https://pypi.org/project/pytickersymbols/
 # read the database and generate all portfolio at once
-clients = pd.read_csv('clients.csv')
+clients = pd.read_csv('generate.csv')
 mercados = ['GSPC','FTSE','NIKKEI','BOVESPA','CANADA','AUSTRALIA','Shanghai','Crypto']
 
 # generate paths to save recommendations
 path = []
 for i in range(len(clients)):
-    path.append(str(clients.Symbol.values[i]) + ' ' + clients['Names'].values[i] + str(' Opt ') + str(clients['Optimization'].values[i]) + str(' ') + str(dt.date.today()) + '.xlsx')
+    path.append(str(clients.Symbol.values[i]) + ' ' + clients['Names'].values[i] + ' ' + clients['Emails'].values[i] + ' ' + str(clients['Money'].values[i]) + ' ' + str(clients['risk'].values[i]) + str(' ') + str(dt.date.today()) + '.xlsx')
 
 clients['Path'] = path
-clients.to_csv('clients.csv')
+clients.to_csv('generate.csv')
 
 dfs = []
 for i in range(len(mercados)):
@@ -208,8 +208,8 @@ def megaManager():
         # OVERWRITE NUMBERS TO STRINGS OF THE PROPER NAMES
         names = ['GSPC','FTSE','NIKKEI','BOVESPA','AUSTRALIA','CANADA','SHANGHAI','CRYPTO']
         for j in range(len(dfs[warning]['Path'])):
-            folder = os.makedirs(f'./DATABASE/', exist_ok=True)
-            path = f'./DATABASE/' + str(dfs[warning]['Path'].values[j])
+            folder = os.makedirs(f'./NewOnes/', exist_ok=True)
+            path = f'./NewOnes/' + str(dfs[warning]['Path'].values[j])
             best = pd.DataFrame(index=df.columns)
             best['capital'] = float(dfs[warning]['Money'].values[j])
             best['price'] = df.tail(1).T.values

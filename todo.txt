@@ -1,0 +1,8 @@
+Separate excels
+clients.csv => 
+(1) generate.csv to generate portfolios inputs of macro.py && generate excel toMaintain.csv
+(2) toMaintain.csv list of clients + operations to do
+ (a) iterate excel to str(MarketSymbol) + str(toMaintain.Names)
+ (b) Do operation of Status 0, 1, 2, 3.
+ (c) Once done all operations record all in clients.csv
+

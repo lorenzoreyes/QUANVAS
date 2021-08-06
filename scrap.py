@@ -50,7 +50,7 @@ def GSPC():
     alpha = 0.1
     rf = riskpct.mean()
     num_portfolios = 1000
-    Upbound = 0.075
+    Upbound = 0.06
     result = [df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths\
         ,observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound]
     return result
@@ -105,7 +105,7 @@ def Cedears():
     alpha = 0.1
     rf = riskpct.mean()
     num_portfolios = 1000
-    Upbound = 0.075
+    Upbound = 0.06
     result = [df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths\
         ,observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound]
     return result
@@ -142,7 +142,7 @@ def NIKKEI():
     alpha = 0.1
     rf = riskpct.mean()
     num_portfolios = 1000
-    Upbound = 0.075
+    Upbound = 0.06
     result = [df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths\
         ,observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound]
     return result
@@ -178,7 +178,7 @@ def Shanghai():
     alpha = 0.1
     rf = riskpct.mean()
     num_portfolios = 1000
-    Upbound = 0.075
+    Upbound = 0.06
     result = [df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths\
         ,observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound]
     return result
@@ -214,7 +214,7 @@ def BOVESPA():
     alpha = 0.1
     rf = riskpct.mean()
     num_portfolios = 1000
-    Upbound = 0.075
+    Upbound = 0.06
     result = [df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths\
         ,observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound]
     return result
@@ -250,7 +250,7 @@ def CANADA():
     alpha = 0.1
     rf = riskpct.mean()
     num_portfolios = 1000
-    Upbound = 0.075
+    Upbound = 0.06
     result = [df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths\
         ,observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound]
     return result
@@ -286,7 +286,7 @@ def FTSE():
     alpha = 0.1
     rf = riskpct.mean()
     num_portfolios = 1000
-    Upbound = 0.075
+    Upbound = 0.06
     result = [df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths\
         ,observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound]
     return result
@@ -322,7 +322,7 @@ def AUSTRALIA():
     alpha = 0.1
     rf = riskpct.mean()
     num_portfolios = 1000
-    Upbound = 0.075
+    Upbound = 0.06
     result = [df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths\
         ,observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound]
     return result
@@ -359,7 +359,7 @@ def binance():
     alpha = 0.1
     rf = riskpct.mean()
     num_portfolios = 1000
-    Upbound = 0.075
+    Upbound = 0.06
     result = [df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths\
         ,observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound]
     return result

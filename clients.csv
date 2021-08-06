@@ -1,26 +1,4 @@
-Names,Emails,Money,Markets,Symbol,Optimization,Status,Change,TimeStamp,Path
-Andrew Ayers,AndrewAyers@gmail.com,68216498,6,Shanghai,0,0,0,2021-07-11 19:28:27,Shanghai Andrew Ayers Opt 0 2021-07-11.xlsx
-Dr. Michael Cook,Dr.MichaelCook@gmail.com,13006030,7,Crypto,3,0,0,2021-07-11 19:28:29,Crypto Dr. Michael Cook Opt 3 2021-07-11.xlsx
-Stephen Robinson,StephenRobinson@gmail.com,32766853,6,Shanghai,1,0,0,2021-07-11 19:28:31,Shanghai Stephen Robinson Opt 1 2021-07-11.xlsx
-Tiffany Smith,TiffanySmith@gmail.com,73602460,5,AUSTRALIA,1,0,0,2021-07-11 19:28:35,AUSTRALIA Tiffany Smith Opt 1 2021-07-11.xlsx
-James Salazar,JamesSalazar@gmail.com,86491734,2,NIKKEI,3,0,0,2021-07-11 16:42:18,NIKKEI James Salazar Opt 3 2021-07-11.xlsx
-Yolanda Ford,YolandaFord@gmail.com,39519732,5,AUSTRALIA,0,0,0,2021-07-11 19:28:37,AUSTRALIA Yolanda Ford Opt 0 2021-07-11.xlsx
-Clifford Cooper,CliffordCooper@gmail.com,38347835,6,Shanghai,3,0,0,2021-07-11 19:28:43,Shanghai Clifford Cooper Opt 3 2021-07-11.xlsx
-Joshua Zimmerman,JoshuaZimmerman@gmail.com,43040927,6,Shanghai,1,0,0,2021-07-11 19:28:47,Shanghai Joshua Zimmerman Opt 1 2021-07-11.xlsx
-Lisa Wiley,LisaWiley@gmail.com,6854191,4,CANADA,1,0,0,2021-07-11 19:28:50,CANADA Lisa Wiley Opt 1 2021-07-11.xlsx
-Cynthia Hudson,CynthiaHudson@gmail.com,69727555,6,Shanghai,3,0,0,2021-07-11 19:28:54,Shanghai Cynthia Hudson Opt 3 2021-07-11.xlsx
-Anthony Bradshaw,AnthonyBradshaw@gmail.com,35351435,7,Crypto,1,0,0,2021-07-11 19:28:56,Crypto Anthony Bradshaw Opt 1 2021-07-11.xlsx
-Paul Young,PaulYoung@gmail.com,35420552,0,GSPC,2,0,0,2021-07-11 19:29:02,GSPC Paul Young Opt 2 2021-07-11.xlsx
-Joshua Henderson,JoshuaHenderson@gmail.com,74128366,7,Crypto,0,0,0,2021-07-11 16:42:18,Crypto Joshua Henderson Opt 0 2021-07-11.xlsx
-Dustin Nielsen,DustinNielsen@gmail.com,148199267,0,GSPC,2,0,0,2021-07-11 19:29:07,GSPC Dustin Nielsen Opt 2 2021-07-11.xlsx
-Christopher Powell,ChristopherPowell@gmail.com,11750405,1,FTSE,2,0,0,2021-07-11 19:29:16,FTSE Christopher Powell Opt 2 2021-07-11.xlsx
-David Ford,DavidFord@gmail.com,603079,6,Shanghai,1,0,0,2021-07-11 16:42:18,Shanghai David Ford Opt 1 2021-07-11.xlsx
-Jennifer Sexton,JenniferSexton@gmail.com,53941801,0,GSPC,3,0,0,2021-07-11 19:29:32,GSPC Jennifer Sexton Opt 3 2021-07-11.xlsx
-Dr. Melissa Vargas,Dr.MelissaVargas@gmail.com,64333687,0,GSPC,1,0,0,2021-07-11 19:29:38,GSPC Dr. Melissa Vargas Opt 1 2021-07-11.xlsx
-Connie Fuentes,ConnieFuentes@gmail.com,85422011,3,BOVESPA,1,0,0,2021-07-11 19:29:44,BOVESPA Connie Fuentes Opt 1 2021-07-11.xlsx
-Dana Hodges,DanaHodges@gmail.com,19058430,4,CANADA,3,0,0,2021-07-11 19:29:56,CANADA Dana Hodges Opt 3 2021-07-11.xlsx
-Erica Carpenter,EricaCarpenter@gmail.com,51736608,6,Shanghai,0,0,0,2021-07-11 19:30:05,Shanghai Erica Carpenter Opt 0 2021-07-11.xlsx
-Dorothy Frank,DorothyFrank@gmail.com,109137312,1,FTSE,0,0,0,2021-07-11 19:30:12,FTSE Dorothy Frank Opt 0 2021-07-11.xlsx
-Valerie Nicholson,ValerieNicholson@gmail.com,45918807,3,BOVESPA,0,0,0,2021-07-11 19:30:18,BOVESPA Valerie Nicholson Opt 0 2021-07-11.xlsx
-Brian Brown,BrianBrown@gmail.com,95208420,4,CANADA,2,0,0,2021-07-11 19:30:31,CANADA Brian Brown Opt 2 2021-07-11.xlsx
-Daniel Adams,DanielAdams@gmail.com,103123746,0,GSPC,1,0,0,2021-07-11 19:30:35,GSPC Daniel Adams Opt 1 2021-07-11.xlsx
+PortfolioID,Names,Symbol,Path
+0,Ariel Fernandez,CRYPTO,./DATABASE/CRYPTO Ariel Fernandez SharpeRatio 2021-07-17.xlsx
+1,Gerardo Genoud,GSPC,./DATABASE/GSPC Gerardo Genoud Opt 1 2021-07-15.xlsx
+2,Gerardo Genoud,CEDEARS,./DATABASE/CEDEARS Gerardo Genoud MinVaR 2021-07-16.xlsx
