@@ -1,0 +1,19 @@
+Architecture for QUANVAS
+What we want to do?
+( 1 ) Create portfolios & save them in directory DATABASE
+
+( 2 ) Maintain them (via update, change capital or reset risk level)
+
+With ( 2 ) we grab the original portfolio provided in ( 1 ), perform 
+the task and reset dataframe in the format of the original portfolio.
+Therefore allowing us to re-do all tasks again and again and again (and again).
+
+##################################################################################
+##################################################################################
+
+What data we operate?
+( 1 ) generate.csv = Name, Money, Market to operate in
+( 2 ) scanner.csv = run script scanner.py and reads all data of DATABASE folder.
+( 3 ) clients.csv = all contact information about our clients so emails can be sent.
+clients.csv grab Path from scanner.csv, iterate and the template grabs columns
+Names & Emails.
