@@ -5,7 +5,7 @@
 
 import pandas as pd, numpy as np, glob
 import yfinance as yahoo, datetime as dt
-import trackCLI as tracker
+import trackATM as tracker
 import os, shutil
 
 pd.options.display.float_format = '{:,.2f}'.format
@@ -43,34 +43,31 @@ def portfolio_name():
         path = str(client[f'{name} Portfolios'][order])
     except:
         print(f"input {order} is not valid. Type an integer")
-        portfolio_operation()
+        portfolio_name()
     
     lista = [order,data, path, client, name]
     return lista
     
 def portfolio_operation():
     lista = portfolio_name()
-    order, data, path, client, name = lista[0], lista[1], lista[2], lista[3], lista[4]
+    order, data, path, client, name = lista 
     print(f"What task do you want to do to {client[f'{name} Portfolios'][order]} ?:\n(1) Monitor Portfolio? To watch performance.\n(2) Do a Deposit or Withdraw? Specify the ammount of capital to change.\n(3) Update risk? By adding new information.\n\n")
-    action = int(input("Type your Task: ...  "))
-    try:
-        if action == 1:
-            data, operation = tracker.PortfolioMonitor(data), 'Actualizado'
-        elif action == 2:
-            data, operation = tracker.DepositOrWithdraw(data), 'Cambio'
-        elif action == 3:
-            data, operation = tracker.portfolioRiskUpdated(data), 'Reseteo'
-
-        lista = [data,f'{client[f"{name} Portfolios"][order]}',order, operation]
-        return lista # data saved as a list because we can track name of the client to further save
-    except:
-        print(f"input {action} not valid. Type again an option")
-        portfolio_operation()
+    choice = input("Type your Task: ...  ")
+    if choice == '1':
+        data, operation = tracker.PortfolioMonitor(data), 'Update'
+    elif choice == '2':
+        amount = int(input("How much you want to change?\n\n"))
+        data, operation = tracker.DepositOrWithdraw(data,amount), 'Change'
+    elif choice == '3':
+        data, operation = tracker.portfolioRiskUpdated(data), 'Reset'
+    
+    lista = [data,f'{client[f"{name} Portfolios"][order]}',order, operation]
+    return lista # data saved as a list because we can track name of the client to further save
 
 # 3. Print it out. Make a decisition, (a) save and do something else, (b) don't save and do something else or (c) quit.
 def operation():
-  action = portfolio_operation() # call function
-  excel, name, request, transaction = action[0].copy(), action[1], action[2], action[3]
+  choice = portfolio_operation() # call function
+  excel, name, request, transchoice = choice
   print(excel)
   print(f"Accumulated Return of\n{name} is\n[{excel.PnLpercent.values[0] - 1 :.4%}]\t [$ {round(excel.notionalToday.values[0] + excel.oldLiquidity.values[0],2)}]".center(50,'_'))
   question = (input("What you want to do? \n(1) Save and do something else, \n(2) Don't save, do something else \nOr (3) Quit.\n\nDecide:  "))
@@ -84,8 +81,8 @@ def operation():
       oldCapital = ''.join(name.split('/')[-1].split()[-3])
       filename = ' '.join(name.split('/')[-1].split()[:-3]) + ' ' + newCapital + ' ' + ' '.join(name.split('/')[-1].split()[-2].split())
       sheet = filename + ' ' + str(dt.date.today()) 
-      new = os.makedirs('Maintenance',exist_ok=True)
-      path = './Maintenance/' + transaction + ' ' + oldCapital + ' ' + sheet
+      new = os.makedirs('Update',exist_ok=True)
+      path = './Update/' + transchoice + ' ' + oldCapital + ' ' + sheet
       writer = pd.ExcelWriter(f'{path}.xlsx', engine='xlsxwriter')
       basics.to_excel(writer, sheet_name=str(dt.date.today()))
       excel.to_excel(writer,sheet_name='change made, old New')

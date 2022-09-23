@@ -13,24 +13,25 @@ import yfinance as yahoo
 
 file = []
 
-for filename in glob.iglob('/home/lorenzo/Quanvas/DATABASE/*'):
+for filename in glob.iglob('./DATABASE/*'):
     file.append(filename)
 
-csv = pd.DataFrame(file,columns=['Path'])
+excel = pd.DataFrame(file,columns=['Path'])
 
 # create a common dataframe with all tickets, to avoid
 # downloading tickets per each client
 
 lista = []
-for i in range(len(csv)):
-    index = pd.read_excel(csv.Path.values[i])
+for i in range(len(excel)):
+    index = pd.read_excel(excel.Path.values[i])
     index = index.iloc[:,0].to_list()
     lista += index
     lista = list(dict.fromkeys(lista))
 
+os.system("python scanner.py")
 data = yahoo.download(lista,period="60d",interval="2m")["Adj Close"].fillna(method="ffill")
-clients = pd.read_csv('/home/lorenzo/Quanvas/scanner.csv')
-hoy = dt.date.today().strftime('%d-%m-%Y')
+clients = pd.read_excel('./scanner.xlsx')
+today = dt.date.today().strftime('%m-%d-%Y')
 
 # iterate clients
 # first grab the client & update data
@@ -44,20 +45,20 @@ server.login(credentials.account,credentials.password)
 
 
 for i in range(len(clients)):
-  clients.Path.values[i] = str(clients.Path.values[i]).replace('./','/home/lorenzo/Quanvas/')
-  cartera = pd.read_excel(clients.Path.values[i])
+  clients.Path.values[i] = str(clients.Path.values[i])
+  holdings = pd.read_excel(clients.Path.values[i])
   file_path, timestamp = str(clients.Path.values[i]), str(clients.Path.values[i]).split()[-1].split('.')[0]
-  portfolio = pd.DataFrame(index=cartera.iloc[:,0]) 
+  portfolio = pd.DataFrame(index=holdings.iloc[:,0]) 
   info = data.copy()
   update = []
   for j in range(len(portfolio)):
       update.append(info[f'{portfolio.index.values[j]}'].values[-1])
-  portfolio = pd.DataFrame(index=cartera.iloc[:,0]) # rewrite
-  portfolio['nominal'] = cartera['nominal'].values
-  portfolio['pricePaid'] = cartera['price'].values
+  portfolio = pd.DataFrame(index=holdings.iloc[:,0]) # rewrite
+  portfolio['nominal'] = holdings['nominal'].values
+  portfolio['pricePaid'] = holdings['price'].values
   portfolio['weights'] = (portfolio['nominal'] * portfolio['pricePaid']) / sum(portfolio['nominal'] * portfolio['pricePaid'])
   portfolio['notionalStart'] = sum(portfolio['nominal'] * portfolio['pricePaid'])
-  portfolio['oldLiquidity'] = cartera['liquid'].values
+  portfolio['oldLiquidity'] = holdings['liquid'].values
   stocks = list(portfolio.index)
   portfolio['priceToday'] = update
   portfolio['notionalToday'] = sum(portfolio['priceToday'] * portfolio['nominal'])
@@ -71,7 +72,7 @@ for i in range(len(clients)):
   portfolio['notionalRebalance'] = sum(portfolio['nominalNew'] * portfolio['priceToday'])
   portfolio['liquidityToReinvest'] =  (portfolio['notionalToday'] + portfolio['oldLiquidity']) - portfolio['notionalRebalance']
   cliente = str(clients.Name.values[i])
-  portfolio.to_csv(f'/home/lorenzo/Quanvas/{cliente} Update {hoy}.csv')
+  portfolio.to_excel(f'{cliente} Update {today}.excel')
   portfolio.index = portfolio.index.to_list()  
   pnl = portfolio.PnLpercent.values[0].copy()
   portfolio = portfolio[portfolio.nominal!=0.0].dropna()
@@ -95,56 +96,55 @@ for i in range(len(clients)):
   oldLiquidity = portfolio.oldLiquidity.values[0]
   portfolio = portfolio.drop(['notionalStart','notionalToday','oldLiquidity','PnLpercent','nominalNew',\
           'adjust','percentReb','notionalRebalance','liquidityToReinvest'],axis=1)
-  portfolio = portfolio.rename(columns={'nominal':'CANTIDAD','pricePaid':'PRECIO DE COMPRA','weights':'PONDERACIÓN','priceToday':'PRECIO HOY','PnLpercentEach':'GANANCIA/PERDIDA'})
+  portfolio = portfolio.rename(columns={'nominal':'Quantity','pricePaid':'Price Paid','weights':'Weights','priceToday':'Price Today','PnLpercentEach':'PnL Each'})
 
 
-  text = f"""<h1>Resumen de cuenta {cliente} {hoy}.</h1><h3>Estado actual en composición y rendimiento simplificado.<br /></h3>"""
-  detalle = f"""<h3>
+  text = f"""<h1>Brief resume of account {cliente} {today}.</h1><h3>Current state given the performance and composition simplified.<br /></h3>"""
+  details = f"""<h3>
               <ul>
-                <li>Retorno Acumulado: {round((pnl * 100)-100,2)}%.</li>
-                <li>Valor inversión hoy {newNotional} versus inicial {oldNotional}.</li>
-                <li>Liquidez remanente para reinvertir: {oldLiquidity}.</li>
-                <li>Fecha de última modificación: {timestamp}.</li>
+                <li>Accumulated return: {round((pnl * 100)-100,2)}%.</li>
+                <li>Value today {newNotional} versus initial value {oldNotional}.</li>
+                <li>Remaining liquidity to reinvest: {oldLiquidity}.</li>
+                <li>Date of last change: {timestamp}.</li>
               </ul></h3>
               <br />"""
-  html_cerrado = portfolio.to_html(na_rep = "").replace('<table','<table id="effect" style="width:50%; height:auto;"').replace('<th>','<th style = "background-color: rgb(60,179,113); color:black">')
+  html_close = portfolio.to_html(na_rep = "").replace('<table','<table id="effect" style="width:50%; height:auto;"').replace('<th>','<th style = "background-color: rgb(60,179,113); color:black">')
 
-  advertencia = """
-            <hr />
-            <h3>ACCIONES A CONSIDERAR:<br/>
+
+  warning = """<h3>Actions to consider:<br/>
                 <ul>
-                    <li>Actualizar Cartera: al hacer rebalanceo.</li>
-                    <li>Cambiar Monto invertido: por medio de extracción o deposito.</li>
-                    <li>Resetear nivel de riesgo: en busca de un rebalanceo para minimizar el riesgo.</li>
+                    <li>Update Porfolio: by rebalance weigths.</li>
+                    <li>Change amount invested by withdraw or deposit.</li>
+                    <li>Reset risk level.</li>
                 </ul></h3>"""
-  advertencia += """<h3>Factores a estar atentos:<br /> 
-            <p>Tendencia del mercado. Ya sea por análisis técnico, fundamental o evento a esperar.<br />Necesidad de liquidez para terminar posiciones.</p>
+  warning += """<h3>Factors to keep an eye on:<br /> 
+            <p>Market Tendency. Considering technichal anaylis, fundamental view or a certain event..<br />Liquidity needs.</p>
         </ul></h3>"""
-  firma = '<p>Esperamos que esta minuta lo mantenga informado.<br /></p><p>Sin más saludamos, equipo QUANVAS.</p>'
-  firma += '<h1>Se adjunta excel con detalle completo y con propuesta de rebalanceo</h1>'
-  html_file = style + highlight + text + detalle + html_cerrado + advertencia + firma + end_html
-
-  # In order to save the actual template we are sending
+  signature = '<p>We hope this brief keep you updated.<br /></p><p>Without nothing more, welcome to QUANVAS.</p>'
+  signature += '<h1>An excel file is attached to view the whole recommendation.</h1>'
+  html_file = style + highlight + text + details + html_close + warning + signature + end_html
+  
+  # In order to save & test the actual template we are sending
   if i == 0:
      e = open('template.html','w') 
      e.write(html_file)
      e.close()
 
-  #destinatarios = ['lreyes@udesa.edu.ar']#, f'{clients.Email.values[i]}']
-  destinatarios = [f'{clients.Email.values[i]}']
+  #recipients = ['your@gmail.com']#, f'{clients.Email.values[i]}']
+  recipients = [f'{clients.Email.values[i]}']
 
   def sendEmail(html_file):
       msg = MIMEMultipart('alternative')
       msg['X-Priority'] = '1'
-      msg['Subject'] = f"QUANVAS Resumen de Cuenta {cliente} {hoy}"
+      msg['Subject'] = f"QUANVAS Account Brief {cliente} {today}"
       msg['From'] = credentials.account
-      msg['To'] = ",".join(destinatarios)
+      msg['To'] = ",".join(recipients)
       # Large Excel 
-      fp = open(f'/home/lorenzo/Quanvas/{cliente} Update {hoy}.csv', 'rb')
+      fp = open(f'{cliente} Update {today}.excel', 'rb')
       parte = MIMEBase('application','vnd.ms-excel')
       parte.set_payload(fp.read())
       encoders.encode_base64(parte)
-      parte.add_header('Content-Disposition', 'attachment', filename=f'Resumen Cuenta {cliente}.csv')
+      parte.add_header('Content-Disposition', 'attachment', filename=f'Resumen Cuenta {cliente}.excel')
       msg.attach(parte)
       part1 = html_file
       part1 = MIMEText(part1, 'html')
@@ -153,12 +153,12 @@ for i in range(len(clients)):
       part1 = MIMEText(part1, 'html')
       msg.attach(part1)
       server.sendmail(credentials.account,
-                    destinatarios,
+                    recipients,
                     msg.as_string())
 
 
   e = sendEmail(html_file)
-  os.remove(f'/home/lorenzo/Quanvas/{cliente} Update {hoy}.csv')
+  os.remove(f'{cliente} Update {today}.excel')
   print(f"{dt.datetime.now().strftime('%H:%M:%S:%f')} Portfolio to {cliente} {file_path} SENT!!!")
   e
 

@@ -8,23 +8,24 @@ import datetime as dt
 
 file = []
 
-for filename in glob.iglob('/home/lorenzo/Quanvas/Maintenance/*'):
+for filename in glob.iglob('./Update/*'):
     file.append(filename)
 
-csv = pd.DataFrame(file,columns=['Path'])
+excel = pd.DataFrame(file,columns=['Path'])
 
-csv['Action'] = [i.split('/')[-1].split()[0] for i in csv.Path.to_list()]
-csv['oldCapital'] = [i.split('/')[-1].split()[1] for i in csv.Path.to_list()]
-csv['Symbol'] = [i.split('/')[-1].split()[2] for i in csv.Path.to_list()]
-csv['Name'] = [' '.join(i.split('/')[-1].split()[3:5]) for i in csv.Path.to_list()]
-csv['Email'] = [i.split('/')[-1].split()[5] for i in csv.Path.to_list()]
-csv['Capital'] = [i.split('/')[-1].split()[6] for i in csv.Path.to_list()]
-csv['Optimization'] = [i.split('/')[-1].split()[7] for i in csv.Path.to_list()]
-csv['Date'] = [i.split('/')[-1].split()[8].split('.')[0] for i in csv.Path.to_list()]
-csv['Change'] = csv.Capital.values.astype(int) - csv.oldCapital.values.astype(int)
-#csv['Withdraw'] = [i.split('/')[-1].split()[9].split('.')[0] for i in csv.Path.to_list()]
-csv['NewName'] =['/'.join(i.split('/')[:-1]) + '/' + ' '.join(i.split('/')[-1].split(' ')[2:-1]) + '.xlsx' for i in csv.Path.to_list()]
+excel['Action'] = [i.split('/')[-1].split()[0] for i in excel.Path.to_list()]
+excel['oldCapital'] = [i.split('/')[-1].split()[1] for i in excel.Path.to_list()]
+excel['Symbol'] = [i.split('/')[-1].split()[2] for i in excel.Path.to_list()]
+excel['Name'] = [' '.join(i.split('/')[-1].split()[3:5]) for i in excel.Path.to_list()]
+excel['Email'] = [i.split('/')[-1].split()[5] for i in excel.Path.to_list()]
+excel['Capital'] = [i.split('/')[-1].split()[6] for i in excel.Path.to_list()]
+excel['Optimization'] = [i.split('/')[-1].split()[7] for i in excel.Path.to_list()]
+excel['Date'] = [i.split('/')[-1].split()[8].split('.')[0] for i in excel.Path.to_list()]
+excel['Change'] = excel.Capital.values.astype(int) - excel.oldCapital.values.astype(int)
+excel['NewName'] =['/'.join(i.split('/')[:-1]) + '/' + ' '.join(i.split('/')[-1].split(' ')[2:-1]) + ' ' + str(dt.date.today()) + '.xlsx' for i in excel.Path.to_list()]
 # excel to iterate to send emails
-csv.index = range(len(csv))
+excel.index = range(len(excel))
 
-csv.to_csv('/home/lorenzo/Quanvas/maintain.csv',index=False)
+writer = pd.ExcelWriter('maintain.xlsx',engine='xlsxwriter')
+excel.to_excel(writer)
+writer.save()

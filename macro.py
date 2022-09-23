@@ -18,17 +18,14 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 
 # read the database and generate all portfolio at once
-#clients = pd.read_csv('generate.csv')
-clients = pd.read_csv('new_clients.csv')
-mercados = ['GSPC','FTSE','NIKKEI','BOVESPA','CANADA','AUSTRALIA','Shanghai','Crypto','CEDEARS','MERVAL']
+clients = pd.read_excel('new_clients.xlsx')
+mercados = ['GSPC','FTSE','CEDEARS','NIKKEI','BOVESPA','CANADA','AUSTRALIA','SHANGHAI','CRYPTO','MERVAL']
 
-# generate paths to save recommendations
 path = []
 for i in range(len(clients)):
     path.append(str(clients.Symbol.values[i]) + ' ' + clients['Names'].values[i] + ' ' + clients['Emails'].values[i] + ' ' + str(clients['Money'].values[i]) + ' ' + str(clients['Risk'].values[i]) + str(' ') + str(dt.date.today()) + '.xlsx')
 
 clients['Path'] = path
-clients.to_csv('generate.csv')
 
 dfs = []
 for i in range(len(mercados)):
@@ -40,20 +37,20 @@ numbers = sorted(set(markets),key=markets.index)
 numbers.sort()
 
 """ Set markets numbers as parameters of megaManager to loop data of the excel  """
-calls = [scrap.GSPC,scrap.FTSE,scrap.NIKKEI,scrap.BOVESPA,\
+calls = [scrap.GSPC,scrap.FTSE,scrap.Cedears,scrap.NIKKEI,scrap.BOVESPA,\
         scrap.CANADA,scrap.AUSTRALIA,scrap.Shanghai,scrap.binance,\
-            scrap.Cedears, scrap.Merval]
+            scrap.Merval]
 
 def megaManager():
-    for i in range(len(numbers)):
-        info = calls[numbers[i]]
+    for i in range(len(numbers)): # number identifies the market
+        info = calls[numbers[i]]  # call the respective market data
         data = info()
-        warning = numbers[i] # to know which element we are iterating and align markets data variables
+        warning = numbers[i]      # to know which element we are iterating and align markets data variables
+        if warning == 8:
+            hedge = yahoo.download('BTCDOWN-USD',period='1d')['Adj Close']
 
         df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths,\
-        observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound = \
-            data[0],data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9],\
-            data[10],data[11],data[12],data[13],data[14],data[15],data[16],data[17]
+        observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound = data
 
         def sharpe_unbound():
             sharpe = pd.DataFrame(mean_rf['Mean']/(std['Std']), columns=['SharpeRatio'],index=pct.columns)
@@ -209,7 +206,7 @@ def megaManager():
 
         # For Cedears current tickets and price. We work with the date related to SP equivalent due to accesability
         df = df
-        if warning == 8:
+        if warning == 2:
             comafi = pd.read_html('https://www.comafi.com.ar/2254-CEDEAR-SHARES.note.aspx')[0]
             # sort by alphabetic order
             comafi = comafi.sort_values('Símbolo BYMA',axis=0,ascending=True)
@@ -223,42 +220,66 @@ def megaManager():
             df = yahoo.download(cedears,period="10d",interval="2m")['Adj Close'].fillna(method="ffill")
 
         # OVERWRITE NUMBERS TO STRINGS OF THE PROPER NAMES to be saved properly in the DB
-        names = ['GSPC','FTSE','NIKKEI','BOVESPA','AUSTRALIA','CANADA','SHANGHAI','CRYPTO','CEDEARS','MERVAL']
+        names = ['GSPC','FTSE','CEDEARS','NIKKEI','BOVESPA','CANADA','AUSTRALIA','SHANGHAI','CRYPTO','MERVAL']
         for j in range(len(dfs[warning]['Path'])):
-            folder = os.makedirs(f'./NewOnes/', exist_ok=True)
-            path = f'./NewOnes/' + str(dfs[warning]['Path'].values[j])
-            best = pd.DataFrame(index=df.columns)
-            best['capital'] = float(dfs[warning]['Money'].values[j])
-            best['price'] = df.tail(1).T.values
-            best['weights'] = optimizations.iloc[:,dfs[warning]['Optimization'].values[j]]
-            best['cash'] = (best['capital'] * best['weights'])
-            if numbers[i] != 7:
-                best['nominal'] =  best['cash'] // best['price'] 
-                best['invested'] = best['price'] * best['nominal']
-                best['percentage'] = best['invested'] / sum(best['invested'])
-                best['total'] = sum(best['invested'])
-                best['liquid'] = best['capital'] - best['total']
-                best = best[best.nominal!=0].dropna() # remove all stocks that you do not invest in
-                ### to adjust weights in order to invest the maximum capital possible
-                reinvest = (best['liquid'][0] / best['total'][0]) + 1 # ROUND DOWN DIFFERENCES
-                best['weights'] = (best['weights'] * reinvest)
-                best['weights'] = best['weights'] / best['weights'].sum()
-                best['cash'] = (best['capital'] * best['weights'])
-                best['nominal'] =  best['cash'] // best['price'] 
-                best['invested'] = best['price'] * best['nominal']
-                best['percentage'] = best['invested'] / sum(best['invested'])
-                best['total'] = sum(best['invested'])
-                best['liquid'] = best['capital'] - best['total']
-                best = best[best.nominal!=0].dropna() # remove all stocks that you do not invest in
-            else: 
-                best['nominal'] =  best['cash'] / best['price'] 
-                best['invested'] = best['price'] * best['nominal']
-                best['percentage'] = best['invested'] / sum(best['invested'])
-                best['total'] = sum(best['invested'])
-                best['liquid'] = best['capital'] - best['total']
-                best = best[best.nominal!=0].dropna() # remove all stocks that you do not invest in
+            if warning == 8:
+              folder = os.makedirs(f'./NewOnes/', exist_ok=True)
+              path = f'./NewOnes/' + str(dfs[warning]['Path'].values[j])
+              # Add a Hedge of BTCDOWNDUSDT 20%
+              best = pd.DataFrame(index=df.columns.to_list()+['BTCDOWN-USD'])
+              best['capital'] = float(dfs[warning]['Money'].values[j])
+              best['price'] = df.iloc[-1].to_list() + [hedge.values[-1]]
+              best['weights'] = optimizations.loc[:,dfs[warning]['Risk'].values[j]].to_list() + [0.2]
+              best['weights'] =  best['weights'] / best['weights'].sum() 
+              best['cash'] = (best['capital'] * best['weights'])
+              # ENDS HEDGING
+              best['cash'] = round(best['cash'])
+              best['nominal'] =  best['cash'] // best['price']
+              best['invested'] = best['price'] * best['nominal']
+              best['percentage'] = best['invested'] / sum(best['invested'])
+              best['total'] = sum(best['invested'])
+              best['liquid'] = best['capital'] - best['total']
+              best = best[best.nominal!=0].dropna() # remove all stocks that you do not invest in
+              ### to adjust weights in order to invest the maximum capital possible
+              reinvest = (best['liquid'][0] / best['total'][0]) + 1 # ROUND DOWN DIFFERENCE
+              best['weights'] = (best['weights'] * reinvest)
+              best['weights'] = best['weights'] / best['weights'].sum()
+              best['cash'] = (best['capital'] * best['weights'])
+              best['nominal'] =  best['cash'] // best['price'] 
+              best = best[best['invested']>10]
+              best['invested'] = best['price'] * best['nominal']
+              best['invested'] = round(best['invested'])
+              best['percentage'] = best['invested'] / sum(best['invested'])
+              best['total'] = sum(best['invested'])
+              best['liquid'] = best['capital'] - best['total']
+            else:
+              folder = os.makedirs(f'./NewOnes/', exist_ok=True)
+              path = f'./NewOnes/' + str(dfs[warning]['Path'].values[j])
+              best = pd.DataFrame(index=df.columns.to_list())
+              best['capital'] = float(dfs[warning]['Money'].values[j])
+              best['price'] = df.iloc[-1].to_list()
+              best['weights'] = optimizations.loc[:,dfs[warning]['Risk'].values[j]].to_list()
+              best['weights'] =  best['weights'] / best['weights'].sum() 
+              best['cash'] = (best['capital'] * best['weights'])
+              best['cash'] = round(best['cash'])
+              best['nominal'] =  best['cash'] / best['price'] 
+              best['invested'] = best['price'] * best['nominal']
+              best['percentage'] = best['invested'] / sum(best['invested'])
+              best['total'] = sum(best['invested'])
+              best['liquid'] = best['capital'] - best['total']
+              best = best[best.nominal!=0].dropna() # remove all stocks that you do not invest in
+              ### to adjust weights in order to invest the maximum capital possible
+              reinvest = (best['liquid'][0] / best['total'][0]) + 1 # ROUND DOWN DIFFERENCES
+              best['weights'] = (best['weights'] * reinvest)
+              best['weights'] = best['weights'] / best['weights'].sum()
+              best['cash'] = (best['capital'] * best['weights'])
+              best['nominal'] =  best['cash'] // best['price'] 
+              best['invested'] = best['price'] * best['nominal']
+              best['percentage'] = best['invested'] / sum(best['invested'])
+              best['total'] = sum(best['invested'])
+              best['liquid'] = best['capital'] - best['total']
+              best = best[best.nominal!=0].dropna() # remove all stocks that you do not invest in
 
-            #best.to_csv(f'{path}')
             writer = pd.ExcelWriter(path, engine='xlsxwriter')
             best.to_excel(writer,sheet_name=f'{dfs[warning]["Names"].values[j]}')
             portfolioAdj.to_excel(writer, sheet_name='portfolioWeights')

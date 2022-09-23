@@ -8,8 +8,6 @@ from scipy import stats
 import scrap
 import ssl
 
-clients = pd.read_csv('generate.csv')
-
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
@@ -49,14 +47,14 @@ def megaManager():
   elif market == '9':
       data = scrap.binance()
       symbol = 'CRYPTO'
+      hedge = yahoo.download('BTCDOWN-USD',period='1d')['Adj Close']
   elif market == '10':
       data = scrap.Merval()
       symbol = 'MERVAL'
 
-  df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weigths,\
-      observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound = \
-            data[0],data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9],\
-            data[10],data[11],data[12],data[13],data[14],data[15],data[16],data[17]
+  df,riskfree,pct,riskpct,mean,mean_rf,std,numerator,downside_risk,noa,weights,\
+      observations,mean_returns,cov,alpha,rf,num_portfolios,Upbound = data
+
   def sharpe_unbound():
     sharpe = pd.DataFrame(mean_rf['Mean']/(std['Std']), columns=['SharpeRatio'],index=pct.columns)
     sharpe = sharpe.sort_values('SharpeRatio', axis=0, ascending=False)
@@ -146,8 +144,8 @@ def megaManager():
     correlation = returns.corr() # correlation
     covariance = returns.cov()  # covariance
     instruments = pd.DataFrame(index= data.columns)
-    instruments['weigths'] = 1/len(instruments.index) # secure equal allocation 
-    instruments['deltas'] = (instruments.weigths * correlation).sum() # deltas as elasticity of the assets
+    instruments['weights'] = 1/len(instruments.index) # secure equal allocation 
+    instruments['deltas'] = (instruments.weights * correlation).sum() # deltas as elasticity of the assets
     instruments['Stdev'] = returns.std()
     instruments['stress'] = (instruments.deltas * instruments.Stdev) * 3 # stress applied at 4 deviations
     instruments['portfolio_stress'] = instruments.stress.sum() # the stress of the portfolio
@@ -161,7 +159,7 @@ def megaManager():
     risk['totalCVaRi'] = risk.CVaRi.sum() #total CVaR of the portfolio
     risk['CVaRattribution'] = risk.CVaRi / risk.totalCVaRi # risk allocation by instrument in the portfolio
     riskadj = pd.DataFrame(index=data.columns)
-    riskadj['base'] = instruments['weigths'].values
+    riskadj['base'] = instruments['weights'].values
     riskadj['CVaRattribution'] = risk.CVaRattribution.sort_values(axis=0,ascending=False)
     riskadj['new'] = portfolio.values  # Choosing the option with the highest return
     riskadj['condition'] = (riskadj.base / riskadj.CVaRattribution)
@@ -202,10 +200,10 @@ def megaManager():
   statistics_portfolios['kurtosis'] = pct.kurtosis()
   statistics_portfolios['annualizedStd'] = statistics_portfolios['std'] * np.sqrt(len(Series))
   statistics_portfolios['annualizedMean'] = statistics_portfolios['mean'] * len(Series)
+  # Compensation is a bare metric return / volatility (sharpe ratio in a nutshell).
   statistics_portfolios['compensation'] = statistics_portfolios['annualizedMean'] / statistics_portfolios['annualizedStd']
   statistics_portfolios = statistics_portfolios.sort_values(by='compensation',ascending=False)
 
-  # Compensation is a bare metric return / volatility (sharpe ratio in a nutshell).
   # Choose the best return at the best risk available.
   winner = str(statistics_portfolios.index[0])
 
@@ -243,30 +241,42 @@ def megaManager():
       capital = int(input(f"How much {client} will invest? "))
       path = f'./NewOnes/{symbol} ' + client + ' ' + str(input("Email address? "))\
               + ' ' + str(capital) + ' ' + profile + ' ' + str(dt.date.today()) + '.xlsx'
-      best = pd.DataFrame(index=df.columns)
-      best['capital'] = capital
-      best['price'] = df.tail(1).T.values
-      best['weights'] = portfolioAdj[f'{profile}'].values 
-      best['cash'] = (best['capital'] * best['weights'])
-      # Separate round from fractional investment that can be done in crypto market.
-      if market != '9':
-          best['nominal'] =  best['cash'] // best['price'] 
+      if market == '9':
+          # Add a Hedge of BTCDOWNDUSDT 20%
+          best = pd.DataFrame(index=df.columns.to_list()+['BTCDOWN-USD'])
+          best['capital'] = capital
+          best['price'] = df.iloc[-1].to_list() + [hedge.values[-1]]
+          # ENDS HEDGING
+          best['weights'] = portfolioAdj[f'{profile}'].to_list() + [0.2]
+          best['weights'] =  best['weights'] / best['weights'].sum() 
+          best['cash'] = (best['capital'] * best['weights'])
+          best['cash'] = round(best['cash'])
+          best['nominal'] =  best['cash'] // best['price']
           best['invested'] = best['price'] * best['nominal']
           best['percentage'] = best['invested'] / sum(best['invested'])
           best['total'] = sum(best['invested'])
           best['liquid'] = best['capital'] - best['total']
           best = best[best.nominal!=0].dropna() # remove all stocks that you do not invest in
           ### to adjust weights in order to invest the maximum capital possible
-          reinvest = (best['liquid'][0] / best['total'][0]) + 1 # ROUND DOWN DIFFERENCES
+          reinvest = (best['liquid'][0] / best['total'][0]) + 1 # ROUND DOWN DIFFERENCE
           best['weights'] = (best['weights'] * reinvest)
           best['weights'] = best['weights'] / best['weights'].sum()
           best['cash'] = (best['capital'] * best['weights'])
           best['nominal'] =  best['cash'] // best['price'] 
+          best = best[best['invested']>10]
           best['invested'] = best['price'] * best['nominal']
+          best['invested'] = round(best['invested'])
           best['percentage'] = best['invested'] / sum(best['invested'])
           best['total'] = sum(best['invested'])
           best['liquid'] = best['capital'] - best['total']
-      else: 
+      else:
+          best = pd.DataFrame(index=df.columns)
+          best['capital'] = capital
+          best['price'] = df.tail(1).T.values
+          best['weights'] = portfolioAdj[f'{profile}'].values
+          best['weights'] =  best['weights'] / best['weights'].sum() 
+          best['cash'] = (best['capital'] * best['weights'])
+          best['cash'] = round(best['cash'])
           best['nominal'] =  best['cash'] / best['price'] 
           best['invested'] = best['price'] * best['nominal']
           best['percentage'] = best['invested'] / sum(best['invested'])

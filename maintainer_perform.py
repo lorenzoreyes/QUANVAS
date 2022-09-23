@@ -1,8 +1,21 @@
-# This file aims to iterate portfolios listed in scanner.csv,
-# perform the same operations of iteratEternity.py but using the 
-# input excel as instructions to do opetations at scale.
-# By changing scanner.csv we maintain the DATABASE updated.
-# Reset format of excel with function BacktoBasiscs, so it can be re iterated in the future
+'''
+We read the status of scanner.xlsx in order to know what operation 
+we have to do to each client
+0 nothing
+1 update to original weigths
+2 change amount of investment
+3 reset risk
+
+base on that we need to
+(1) grab excel from DATABASE
+(2) perform the change
+(3) generate new name (grab old image and send it to OldPortolios folder)
+Name must be
+Update/{Operation} {Capital old} ..rest as convention was
+(4) once all changes are done we reset scanner.xlsx to 0 (as everything was done)
+(5) run update.py to inform proper changes to the clients
+'''
+
 
 import pandas as pd, datetime as dt, numpy as np
 import smtplib, re, os 
@@ -17,23 +30,23 @@ import trackATM as tracker
 from templateReport import * # template html of all content of the email
 import yfinance as yahoo 
 
-clients = pd.read_csv('/home/lorenzo/Quanvas/scanner.csv')
+clients = pd.read_excel('/.scanner.xlsx')
 clients = clients[clients.Status!=0]
 clients.index = range(len(clients))
-csv = pd.DataFrame(clients.Path.to_list(),columns=['Path'])
-csv.index= range(len(csv))
+excel = pd.DataFrame(clients.Path.to_list(),columns=['Path'])
+excel.index= range(len(excel))
 # create a common dataframe with all tickets, to avoid
 # downloading tickets per each client
 
 lista = []
-for i in range(len(csv)):
-    index = pd.read_excel(csv.Path.values[i])
+for i in range(len(excel)):
+    index = pd.read_excel(excel.Path.values[i])
     index = index.iloc[:,0].to_list()
     lista += index
     lista = list(dict.fromkeys(lista))
 
 data = yahoo.download(lista,period="252d",interval="60m")["Adj Close"].fillna(method="ffill")
-hoy = dt.date.today().strftime('%d-%m-%Y')
+today = dt.date.today().strftime('%d-%m-%Y')
 
 # 0 do nothing, 1 rebalance by update, 2 perform withdraw and 3 reset risk by CVaR
 
@@ -42,22 +55,22 @@ for i in range(len(clients)):
         pass
     elif clients.Status.values[i] == 1:
       # Update values of the portfolio
-      cartera = pd.read_excel(csv.Path.values[i])
-      previous = cartera.copy()
+      holdings = pd.read_excel(excel.Path.values[i])
+      previous = holdings.copy()
       path = str(clients['Path'][i])
       oldcapital = str(clients.Path[i].split()[-3])
-      action = 'Actualizar'
-      portfolio = pd.DataFrame(index=cartera.iloc[:,0]) 
+      action = 'Update'
+      portfolio = pd.DataFrame(index=holdings.iloc[:,0]) 
       info = data.copy()
       update = []
       for j in range(len(portfolio)):
           update.append(info[f'{portfolio.index.values[j]}'].values[-1])
-      portfolio = pd.DataFrame(index=cartera.iloc[:,0]) # rewrite
-      portfolio['nominal'] = cartera['nominal'].values
-      portfolio['pricePaid'] = cartera['price'].values
+      portfolio = pd.DataFrame(index=holdings.iloc[:,0]) # rewrite
+      portfolio['nominal'] = holdings['nominal'].values
+      portfolio['pricePaid'] = holdings['price'].values
       portfolio['weights'] = (portfolio['nominal'] * portfolio['pricePaid']) / sum(portfolio['nominal'] * portfolio['pricePaid'])
       portfolio['notionalStart'] = sum(portfolio['nominal'] * portfolio['pricePaid'])
-      portfolio['oldLiquidity'] = cartera['liquid'].values
+      portfolio['oldLiquidity'] = holdings['liquid'].values
       stocks = list(portfolio.index)
       portfolio['priceToday'] = update
       portfolio['notionalToday'] = sum(portfolio['priceToday'] * portfolio['nominal'])
@@ -73,42 +86,43 @@ for i in range(len(clients)):
       capital = str(int(portfolio.notionalToday.values[0] + portfolio.liquidityToReinvest.values[0]))
       basics = portfolio.copy()
       basics = tracker.BacktoBasics(basics)
-      folder, operations = os.makedirs('Oldportfolios',exist_ok=True), os.makedirs('Maintenance',exist_ok=True)
+      folder, operations = os.makedirs('Oldportfolios',exist_ok=True), os.makedirs('Update',exist_ok=True)
       name = path
-      older, newer = path.replace('./DATABASE/','./Oldportfolios/'), path.replace('./DATABASE/',f'./Maintenance/{action} {oldcapital} ')
+      older, newer = path.replace('./DATABASE/','./Oldportfolios/'), path.replace('./DATABASE/',f'./Update/{action} {oldcapital} ')
       shutil.move(f'{name}',f'{older}')
       newName = ' '.join(newer.split()[:-1])
       newName = newName.split()
       newName[-2] = str(capital)
       # New Name UPDATED to the end
-      newName = ' '.join(newName) + ' ' + str(dt.date.today()) + ' [UPDATED].xlsx'
+      newName = ' '.join(newName) + ' ' + str(dt.date.today()) + '.xlsx'
       writer = pd.ExcelWriter(f'{newName}',engine='xlsxwriter')
       basics.to_excel(writer,sheet_name=f'Updated {dt.date.today()}')
-      portfolio.to_excel(writer
-                         ,sheet_name='Update Done')
+      portfolio.to_excel(writer,sheet_name='Update Done')
       previous.to_excel(writer,sheet_name='Previous Composition')
       writer.save()
-      clients.TimeStamp.values[i] = dt.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-      # Reset Status to 0 as there any changes pending to do
+      # Reset Status to 0 as the time done the operation
       clients.Status.values[i] = 0
+      clients.TimeStamp.values[i] = dt.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+
+      # Change Capital
     elif clients.Status.values[i] == 2:
       # Change capital ammount of the investment, positive or negative, satisfying original weights
-      cartera = pd.read_excel(csv.Path.values[i])
-      previous = cartera.copy()
+      holdings = pd.read_excel(excel.Path.values[i])
+      previous = holdings.copy()
       path = str(clients['Path'][i])
       oldcapital = str(clients.Path[i].split()[-3])
-      action = 'Cambio'
-      portfolio = pd.DataFrame(index=cartera.iloc[:,0]) 
+      action = 'Change'
+      portfolio = pd.DataFrame(index=holdings.iloc[:,0]) 
       info = data.copy()
       update = []
       for j in range(len(portfolio)):
           update.append(info[f'{portfolio.index.values[j]}'].values[-1])
-      portfolio = pd.DataFrame(index=cartera.iloc[:,0]) # rewrite
-      portfolio['nominal'] = cartera['nominal'].values
-      portfolio['pricePaid'] = cartera['price'].values
+      portfolio = pd.DataFrame(index=holdings.iloc[:,0]) # rewrite
+      portfolio['nominal'] = holdings['nominal'].values
+      portfolio['pricePaid'] = holdings['price'].values
       portfolio['weights'] = (portfolio['nominal'] * portfolio['pricePaid']) / sum(portfolio['nominal'] * portfolio['pricePaid'])
       portfolio['notionalStart'] = sum(portfolio['nominal'] * portfolio['pricePaid'])
-      portfolio['oldLiquidity'] = cartera['liquid'].values
+      portfolio['oldLiquidity'] = holdings['liquid'].values
       portfolio['priceToday'] = update
       portfolio['notionalToday'] = sum(portfolio['priceToday'] * portfolio['nominal'])
       portfolio['PnLpercent'] = portfolio['notionalToday'] / portfolio['notionalStart']
@@ -124,9 +138,9 @@ for i in range(len(clients)):
       capital = str(int(portfolio.capitalNew.values[0]))
       basics = portfolio.copy()
       basics = tracker.BacktoBasics(basics)
-      folder, operations = os.makedirs('Oldportfolios',exist_ok=True), os.makedirs('Maintenance',exist_ok=True)
+      folder, operations = os.makedirs('Oldportfolios',exist_ok=True), os.makedirs('Update',exist_ok=True)
       name = path
-      older, newer = path.replace('./DATABASE/','./Oldportfolios/'), path.replace('./DATABASE/',f'./Maintenance/{action} {oldcapital} ')
+      older, newer = path.replace('./DATABASE/','./Oldportfolios/'), path.replace('./DATABASE/',f'./Update/{action} {oldcapital} ')
       shutil.move(f'{name}',f'{older}')
       newName = ' '.join(newer.split()[:-1])
       newName = newName.split()
@@ -142,15 +156,17 @@ for i in range(len(clients)):
       # Reset Status to 0 as there any changes pending to do
       clients.Status.values[i] = 0
       clients.Change.values[i] = 0
+
+      # Reset Risk
     elif clients.Status.values[i] == 3:
       # Update risk levels by resetting Component-Value-at-Risk
       # All process to gather Component-Value-at-Risk and apply it to current prices
-      cartera = pd.read_excel(csv.Path.values[i])
-      previous = cartera.copy()
+      holdings = pd.read_excel(excel.Path.values[i])
+      previous = holdings.copy()
       path = str(clients['Path'][i])
       oldcapital = str(clients.Path[i].split()[-3])
-      action = 'Resetear'
-      portfolio = pd.DataFrame(index=cartera.iloc[:,0]) 
+      action = 'Reset'
+      portfolio = pd.DataFrame(index=holdings.iloc[:,0]) 
       info = data.copy()
       update = pd.DataFrame(info[f'{portfolio.index[0]}'].values,columns=[f'{portfolio.index.values[0]}'],index=info.index)
       for j in range(1, len(portfolio)):
@@ -178,7 +194,7 @@ for i in range(len(clients)):
       riskadj = pd.DataFrame(index=update.columns)
       riskadj['base'] = instruments['weights'].values
       riskadj['CVaRattribution'] = risk.CVaRattribution.sort_values(axis=0,ascending=False)
-      riskadj['new'] = cartera['weights'].values  # Choosing the option with the highest return
+      riskadj['new'] = holdings['weights'].values  # Choosing the option with the highest return
       riskadj['condition'] = (riskadj.base / riskadj.CVaRattribution)
       riskadj['newrisk'] = (riskadj.new / riskadj.CVaRattribution)
       riskadj['differences'] = (riskadj.newrisk - riskadj.condition)  # apply this result as a percentage to multiply new weights
@@ -189,12 +205,12 @@ for i in range(len(clients)):
       riskadj['MinCVaR'] = riskadj.suggested / riskadj.tototal
       riskadj[riskadj.MinCVaR>= 0.12] = 0.12
       riskadj['MinCVaR'] = riskadj['MinCVaR'] / sum(riskadj['MinCVaR'])
-      portfolio = pd.DataFrame(index=cartera.iloc[:,0]) # rewrite
-      portfolio['nominal'] = cartera['nominal'].values
-      portfolio['pricePaid'] = cartera['price'].values
+      portfolio = pd.DataFrame(index=holdings.iloc[:,0]) # rewrite
+      portfolio['nominal'] = holdings['nominal'].values
+      portfolio['pricePaid'] = holdings['price'].values
       portfolio['weights'] = riskadj.MinCVaR.values 
       portfolio['notionalStart'] = sum(portfolio['nominal'] * portfolio['pricePaid'])
-      portfolio['oldLiquidity'] = cartera['liquid'].values
+      portfolio['oldLiquidity'] = holdings['liquid'].values
       portfolio['priceToday'] = update.tail(1).T.values
       portfolio['notionalToday'] = sum(portfolio['priceToday'] * portfolio['nominal'])
       portfolio['PnLpercent'] = portfolio['notionalToday'] / portfolio['notionalStart']
@@ -208,15 +224,15 @@ for i in range(len(clients)):
       capital = str(int(portfolio.notionalToday.values[0] + portfolio.liquidityToReinvest.values[0]))
       basics = portfolio.copy()
       basics = tracker.BacktoBasics(basics)
-      folder, operations = os.makedirs('Oldportfolios',exist_ok=True), os.makedirs('Maintenance',exist_ok=True)
+      folder, operations = os.makedirs('Oldportfolios',exist_ok=True), os.makedirs('Update',exist_ok=True)
       name = path
-      older, newer = path.replace('./DATABASE/','./Oldportfolios/'), path.replace('./DATABASE/',f'./Maintenance/{action} {oldcapital} ')
+      older, newer = path.replace('./DATABASE/','./Oldportfolios/'), path.replace('./DATABASE/',f'./Update/{action} {oldcapital} ')
       shutil.move(f'{name}',f'{older}')
       newName = ' '.join(newer.split()[:-1])
       newName = newName.split()
       newName[-2] = str(capital)
       # Change RISKUPDATED to the end
-      newName = ' '.join(newName) + ' ' + str(dt.date.today()) + ' [RISKUPDATED].xlsx'
+      newName = ' '.join(newName) + ' ' + str(dt.date.today()) + '.xlsx'
       writer = pd.ExcelWriter(f'{newName}',engine='xlsxwriter')
       basics.to_excel(writer,sheet_name=f"Risk {dt.date.today()}")
       portfolio.to_excel(writer,sheet_name='Risk Updated')
@@ -235,5 +251,6 @@ for i in range(len(to_delete)):
     if to_delete[i] in clients.columns.to_list():
         del clients[f'{to_delete[i]}']
 
-
-clients.to_csv('scanner.csv',index=False)
+writer = pd.ExcelWriter('scanner.xlsx',engine='xlsxwriter')
+clients.to_excel(writer)
+writer.save()

@@ -10,11 +10,12 @@ from email import encoders
 import trackATM as tracker
 from templateReport import * # template html of all content of the email
 from maintainer_report import * 
+os.system("python maintainer_report.py") # re-assurance to know it runs script
 
-csv = pd.read_csv('/home/lorenzo/Quanvas/maintain.csv')
-clients = csv
+xlsx = pd.read_excel('./maintain.xlsx')
+clients = xlsx
 
-hoy = dt.date.today().strftime('%d-%m-%Y')
+today = dt.date.today().strftime('%d-%m-%Y')
 
 # iterate clients
 # first grab the client & update data
@@ -28,17 +29,17 @@ server.login(credentials.account,credentials.password)
 
 
 for i in range(len(file)):
-  cartera = pd.read_excel(csv.Path.values[i])
-  name, action, capital, oldcapital, change = \
-      csv.Name[i], csv.Action[i],int(csv.Capital[i]),int(csv.oldCapital[i]), csv.Change[i]
+  holdings = pd.read_excel(xlsx.Path.values[i])
+  name, action, capital, oldcapital, change = xlsx.Name[i], xlsx.Action[i],int(xlsx.Capital[i]),int(xlsx.oldCapital[i]), xlsx.Change[i]
   withdraw = ''
-  if action == 'Cambio':
-    withdraw = int(csv.Withdraw[i])
+  if action == 'Change': # Change Status
+    action = 'Cambio'
+    withdraw = int(xlsx.Change[i])
     withdraw = '${:,.2f}'.format(withdraw).replace('.','p').replace(',','.').replace('p',',')
 
-  portfolio = pd.DataFrame(index=cartera.iloc[:,0]) # rewrite
-  portfolio = cartera.iloc[:,5:-2].copy()
-  portfolio.index = cartera.iloc[:,0].to_list()
+  portfolio = pd.DataFrame(index=holdings.iloc[:,0]) # rewrite
+  portfolio = holdings.iloc[:,5:-2].copy()
+  portfolio.index = holdings.iloc[:,0].to_list()
   portfolio['nominal'] = ['{:,.0f}'.format(i).replace('.','p').replace(',','.').replace('p',',') for i in list((portfolio['nominal'].astype(float)).values)]
   portfolio['invested'] = ['${:,.2f}'.format(i).replace('.','p').replace(',','.').replace('p',',') for i in list((portfolio['invested'].astype(float)).values)]
   portfolio['percentage'] = ['{:,.2f}%'.format(i).replace('.','p').replace(',','.').replace('p',',') for i in list((portfolio['percentage'].astype(float)).values * 100.0)]
@@ -46,38 +47,46 @@ for i in range(len(file)):
   capital = '${:,.2f}'.format(capital).replace('.','p').replace(',','.').replace('p',',')
   oldcapital = '${:,.2f}'.format(oldcapital).replace('.','p').replace(',','.').replace('p',',')
   portfolio = portfolio.rename(columns={'nominal':'CANTIDAD','invested':'INVERTIDO','percentage':'PONDERACIÓN'})
-  email = csv.Email[i]
+  email = xlsx.Email[i]
   
   text = f"""<h1>Buenos dias {name}.</h1><br />"""
   optional = ''
   if withdraw != '':
     optional = ' Cambio de Capital por ' + f'{withdraw}'
-  detalle = f"""<h3>Datos Inversión Cambiada:
+  details = f"""<h3>Datos Inversión Cambiada:
                   <ul>
                     <li>Operación de {action}.{optional}</li>
                     <li>Monto de Inversión: {capital}. Anterior {oldcapital}</li>
-                    <li>Cambio {change}</li>
+                    <li>Change {change}</li>
                   </ul>
                 </h3> """
               
-  html_cerrado = portfolio.to_html(na_rep = "").replace('<table','<table id="effect" style="width:70%; height:auto;"').replace('<th>','<th style = "background-color: rgb(60,179,113); color:black">')
+  html_close = portfolio.to_html(na_rep = "").replace('<table','<table id="effect" style="width:70%; height:auto;"').replace('<th>','<th style = "background-color: rgb(60,179,113); color:black">')
 
 
-  advertencia = """<h3>Tras esta decisión debemos estar pendientes a:</h3><br /> 
+  warning = """<h3>Tras esta decisión debemos estar pendientes a:</h3><br /> 
             <p>La tendencia del mercado y a las necesidades para operar para el monitoreo diario de la inversión.</p>"""
-  firma = '<h2>Se adjunta excel con detalle completo y con propuesta de rebalanceo</h2>'
-  html_file = style + highlight + text + detalle + html_cerrado + advertencia + firma + end_html
+  signature = '<h2>Se adjunta excel con details completo y con propuesta de rebalanceo</h2>'
+  html_file = style + highlight + text + details + html_close + warning + signature + end_html
 
-  destinatarios = ['lreyes@udesa.edu.ar', f'{clients.Email.values[i]}']
+  recipients = ['your@gmail.com', f'{clients.Email.values[i]}']
+
+  # In order to save & test the actual template we are sending
+  if i == 0:
+     e = open('templateUpdate.html','w') 
+     e.write(html_file)
+     e.close()
+
+
 
   def sendEmail(html_file):
       msg = MIMEMultipart('alternative')
       msg['X-Priority'] = '1'
-      msg['Subject'] = f"Actualización QUANVAS {name} {hoy}"
+      msg['Subject'] = f"Actualización QUANVAS {name} {today}"
       msg['From'] = credentials.account
-      msg['To'] = ",".join(destinatarios)
+      msg['To'] = ",".join(recipients)
       # Large Excel 
-      fp = open(f'{csv.Path.values[i]}', 'rb')
+      fp = open(f'{xlsx.Path.values[i]}', 'rb')
       parte = MIMEBase('application','vnd.ms-excel')
       parte.set_payload(fp.read())
       encoders.encode_base64(parte)
@@ -90,11 +99,11 @@ for i in range(len(file)):
       part1 = MIMEText(part1, 'html')
       msg.attach(part1)
       server.sendmail(credentials.account,
-                    destinatarios,
+                    recipients,
                     msg.as_string())
-      newname = f'{csv.NewName.values[i]}'
-      os.rename(f'{csv.Path.values[i]}',f'{csv.NewName.values[i]}')
-      todb = newname.replace('Maintenance','DATABASE')
+      newname = f'{xlsx.NewName.values[i]}'
+      os.rename(f'{xlsx.Path.values[i]}',f'{xlsx.NewName.values[i]}')
+      todb = newname.replace('Update','DATABASE')
       shutil.move(f'{newname}',f'{todb}')
 
 

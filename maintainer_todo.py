@@ -1,13 +1,17 @@
-# We want to iterate excels, perform a task and save changes
-# designed in TrackUpdate.py Grab an input int 
-# of excel to perform task (monitor, update, withdraw, etc)
-# from the command line.
+''' 
+A tiny program to enter input to scanner.xlsx
+Status and Change columns
+in order to leave it for maintainer_perform.py script
+
+
+end result = excel as input to be trigger
+'''
 
 import pandas as pd
 
 pd.options.display.float_format = '{:,.2f}'.format
 
-database = pd.read_csv('scanner.csv')
+database = pd.read_excel('scanner.xlsx')
 
 # 1. Choose excel to work with and operation what operation to do
 def portfolio_operation():
@@ -22,7 +26,7 @@ def portfolio_operation():
     if state==2:
         change = int(input("\nSpecify capital to deposit or withdraw\n\n\t"))
     database.Status.values[index], database.Change.values[index] = int(state), int(change)
-    database.to_csv('scanner.csv',index=False)
+    database.to_xlsx('scanner.xlsx',index=False)
     
 def trigger():
     portfolio_operation()

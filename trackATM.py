@@ -5,7 +5,7 @@ import yfinance as yahoo
 import pandas as pd
 import numpy as np
 
-"""4 main functions to handle the cycle of portfolio management from the clients.csv inputs
+"""4 main functions to handle the cycle of portfolio management from the clients.xlsx inputs
   0 Do nothing.
   1 portfolioMonitor to update and suggets rebalance allocaiton
   2 DepositOrWithdraw suggest new composition based on a capital change given in Status = 2 & ammount to change.
@@ -17,15 +17,15 @@ def PortfolioMonitor(data):
   """Provide a DataFrame.index as the stock list 
      to update data, DataFrame['quantity'] &
      Data['pricepaid'] for the stocks """
-  cartera = data # pd.read_excel(str(input("Type excel to work with: ")))
-  portfolio = pd.DataFrame(index=cartera.iloc[:,0])
-  portfolio['nominal'] = cartera['nominal'].values
-  portfolio['pricePaid'] = cartera['price'].values
+  holdings = data # pd.read_excel(str(input("Type excel to work with: ")))
+  portfolio = pd.DataFrame(index=holdings.iloc[:,0])
+  portfolio['nominal'] = holdings['nominal'].values
+  portfolio['pricePaid'] = holdings['price'].values
   portfolio['weights'] = (portfolio['nominal'] * portfolio['pricePaid']) / sum(portfolio['nominal'] * portfolio['pricePaid'])
   portfolio['notionalStart'] = sum(portfolio['nominal'] * portfolio['pricePaid'])
-  portfolio['oldLiquidity'] = cartera['liquid'].values
+  portfolio['oldLiquidity'] = holdings['liquid'].values
   stocks = list(portfolio.index)
-  portfolio['priceToday'] = (yahoo.download(stocks,period="7d",interval="1m",prepost=True)['Adj Close'].fillna(method='ffill')).tail(1).T
+  portfolio['priceToday'] = (yahoo.download(stocks,period="7d",interval="2m",prepost=True)['Adj Close'].fillna(method='ffill')).tail(1).T
   portfolio['notionalToday'] = sum(portfolio['priceToday'] * portfolio['nominal'])
   portfolio['PnLpercent'] = portfolio['notionalToday'] / portfolio['notionalStart']
   portfolio['PnLpercentEach'] = portfolio['priceToday'] / portfolio['pricePaid']
@@ -41,13 +41,13 @@ def PortfolioMonitor(data):
 def DepositOrWithdraw(data, ammount):
   """Provide a DataFrame update with the ammount to change Notional"""
   ammount = float(ammount)
-  cartera = data # pd.read_excel(str(input("Type excel to work with: ")))
-  portfolio = pd.DataFrame(index=cartera['Unnamed: 0'].values)
-  portfolio['nominal'] = cartera['nominal'].values
-  portfolio['pricePaid'] = cartera['price'].values
+  holdings = data # pd.read_excel(str(input("Type excel to work with: ")))
+  portfolio = pd.DataFrame(index=holdings['Unnamed: 0'].values)
+  portfolio['nominal'] = holdings['nominal'].values
+  portfolio['pricePaid'] = holdings['price'].values
   portfolio['weights'] = (portfolio['nominal'] * portfolio['pricePaid']) / sum(portfolio['nominal'] * portfolio['pricePaid'])
   portfolio['notionalStart'] = sum(portfolio['nominal'] * portfolio['pricePaid'])
-  portfolio['oldLiquidity'] = cartera['liquid'].values
+  portfolio['oldLiquidity'] = holdings['liquid'].values
   stocks = list(portfolio.index)
   portfolio['priceToday'] = (yahoo.download(stocks,period="2d",interval="1m")['Adj Close'].fillna(method='ffill')).tail(1).T
   portfolio['notionalToday'] = sum(portfolio['priceToday'] * portfolio['nominal'])

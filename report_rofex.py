@@ -10,23 +10,10 @@ from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email import encoders
-from Exchanges import *
+from argentinafx import *
 
 today = dt.date.today().strftime('%Y-%m-%d')
-hoy = dt.date.today().strftime('%d/%m/%y')
-
-excel= pd.read_csv(f'/home/lorenzo/Quanvas/Exchanges.csv')
-excel.index = excel.Date.values
-del excel['Date']
-# Stats to show
-# Last Price
-mep,adr,dollar = excel.iloc[-1,0],excel.iloc[-1,1],excel.iloc[-1,2]
-# Price 3 months before
-mep3,adr3,dollar3 = excel.iloc[-60,0],excel.iloc[-60,1],excel.iloc[-60,2]
-# Return over 3 months time lapse
-mep3R, adr3R, dollar3R = excel.iloc[-60:,0].pct_change().sum(),excel.iloc[-60:,1].pct_change().sum(),excel.iloc[-60:,2].pct_change().sum()
-
-excel = excel.sort_index(axis=0,ascending=False)
+xcel = excel.sort_index(axis=0,ascending=False)
 indice = []
 for i in range(len(excel)):
     indice.append(dt.datetime.strptime(excel.index[i],'%Y-%m-%d'))
@@ -66,9 +53,9 @@ server.starttls()
 # login account + password
 server.login(credentials.account,credentials.password)
 
-clients = pd.read_csv('/home/lorenzo/Quanvas/scanner.csv')
+clients = pd.read_excel('/home/lorenzo/Quanvas/scanner.excel')
 hoy = dt.date.today().strftime('%d-%m-%Y')
-destinatarios = ['akirafierro@gmail.com'] #['lreyes@udesa.edu.ar', f'{clients.Email.values[i]}']
+destinatarios = ['akirafierro@gmail.com'] #['your@gmail.com', f'{clients.Email.values[i]}']
 
 preview = """<h2>El Estado del mercado cambiario argentino se describe bajo los siguientes indicadores.</h2>"""
 preview += f"""<h3><ul>
