@@ -1,38 +1,70 @@
-<img src="QUANVAS.jpg" width="100%" height="20%">
+# QUANVAS a CRUD approach to do PORTFOLIO MANAGEMENT
+*** 10 markets targeted, but BINANCE is deployed.
 
-# A program to do Portfolio Cycle Management
+### This project is FOSS && I share my philosophy 
+### There is no warrants, you have a program as is
 
-* Structure of the project:
-<img src="treeQuanvas.jpg" width="50%" height="5%">
+4 STAGES for a portfolio in its lifecycle
 
-## Description
-This project assembles all the tasks related to the cycle of portfolio management.
-From creating an investment to maintain it. It operates at 8 different markets, have 4 
-different types of optimizations and generates excels for each investment.
-At "micro.py" we can see the program to generate a portfolio individually, where in "macro.py"
-we set instructions at "clients.csv" to iterate so to scale up. Once we have our investment created
-we need to maintain it, from updating the performace, change capital invested or resetting risk levels.
-At "ATM.py" we have this last 3 operations to iterate through all excels of micro.py, where "maintenance.py" 
-is the same script but reading the instructions of the excel.
+(1) Generate portfolio based on the clients inputs
+Risk-Profiles From conservative to Agressive Sharpe Ratio to Min VaR
 
+(2) Notify daily performance 
 
-### STEPS TO EXECUTE at MACRO LEVEL
+(3) Change based on update-weights/change-amount-invested/reset-risk
 
-* 1- run " pip install -r requirements.txt "
-* 2- run " python clients.py " To generate with Faker library a clients.csv test file.
-* 3- run " python macro.py " to iterate the excel with the instructions to generate required portfolios for each client with proper name, market to operate, risk level desired and ammount of capital to invest.
-* 4- run " python maintenance.py " to do Update of the investment, Change ammount of capital invested, update risk by C-VaR or do-nothing.
+(4) GoBacktoBasics and inform daily performance of portfolio to client
 
-### STEPS TO DO STEP BY STEP
-* 1- run " python micro.py " an generate by hand a portfolio with desired attributes.
-* 2- run " python ATM.py " to update, change capital invested or reset risk of all portfolios generated.
+# COMMANDS.
+
+## pip install -r requirements.txt
+## see fakeClients.py that simulates data for clients
 
 
-### WHAT DOES EACH FILE?
-* scrap.py a set of functions to gather the information needed and filter by top 50 under criteria of sharpe ratio.
-* micro.py is the individual creator of portfolios.
-* macro.py runs the clients.csv file as input to do all the specified portfolios.
-* ATM.py just like an ATM machine to know the state of the investment updated, reset risk or make a withdraw.
-* maintenance.py same as ATM.py but in a bigger scale using clients.csv as inputs. It resets columns of values so to not repeat same operations.
-* trackCLI.py & trackATM.py set of functions to Update, Change Capital and Reset Risk by C-VaR.
+## 1-Step Create portfolio individually or macro 
+```bash
+python micro.py # enter input of each portfolio by hand
 
+python macro.py # reads  new_clients.xlsx as inputs
+```
+## 2-Notify Portolio Creation & its daily performance 
+```bash
+python welcome.py # Reads NewOnes Folder, sent email and moves'em to DATABASE
+python bienvenido.py # same in spanish
+
+python resume.py # via scanner.py that creates scanner.xlsx notify DATABASE performance
+```
+## 3-Change base on Update|Change-Amount|Reset-Risk
+```bash
+python ATM.py # as an ATM machine, if a change is done it moves the excel to Update/ folder
+maintainer* script reads excel and maintainer_perform do it all in a loop
+
+update.py # notify the change to the client and moves new the excel to DATABASE,
+keep the old in OldPortfolio to track history
+```
+## Bonus - market report 
+```bash
+python marketReport.py # Give your clients a market watch
+```
+
+&& Criteria in order to develop
+
+As soon as you achieve a functionality you will have to ask yourself before adding
+it to your program the following questions:
+
+What is the goal of the program? What problem you try to solve?
+
+Describe it plain and simple.
+
+what is the vision/approach you are following doing this?
+
+is it readable/simple? 
+
+what value it adds this version compared to the previous one?
+
+how can i debug it? where does it crash?
+
+what updates demands in the rest of the code in order to implement it?
+
+Once you end a program, it will be the sum the whole process and not only
+the last version.
